@@ -66,6 +66,7 @@ typedef struct {
     uint32_t stream_id;
     cam_stream_type_t stream_type;
     int8_t buf_idx;
+    uint8_t is_uv_subsampled;
     struct timespec ts;
     uint32_t frame_idx;
     int8_t num_planes;
@@ -328,7 +329,7 @@ typedef struct {
      *       buf before this call
      **/
     int32_t (*set_parms) (uint32_t camera_handle,
-                          parm_buffer_t *parms);
+                          void *parms);
 
     /** get_parms: fucntion definition for querying camera
      *             based parameters from server
@@ -342,7 +343,7 @@ typedef struct {
      *       the buf before this call
      **/
     int32_t (*get_parms) (uint32_t camera_handle,
-                          parm_buffer_t *parms);
+                          void *parms);
 
     /** do_auto_focus: fucntion definition for performing auto focus
      *    @camera_handle : camer handler
@@ -372,22 +373,6 @@ typedef struct {
      **/
     int32_t (*prepare_snapshot) (uint32_t camera_handle,
                                  int32_t do_af_flag);
-
-    /** start_zsl_snapshot: function definition for starting
-     *                    zsl snapshot.
-     *    @camera_handle : camer handler
-     *  Return value: 0 -- success
-     *                -1 -- failure
-     **/
-    int32_t (*start_zsl_snapshot) (uint32_t camera_handle);
-
-    /** stop_zsl_snapshot: function definition for stopping
-     *                    zsl snapshot.
-     *    @camera_handle : camer handler
-     *  Return value: 0 -- success
-     *                -1 -- failure
-     **/
-    int32_t (*stop_zsl_snapshot) (uint32_t camera_handle);
 
     /** add_channel: fucntion definition for adding a channel
      *    @camera_handle : camer handler
@@ -637,5 +622,5 @@ uint8_t get_num_of_cameras();
 
 /* return reference pointer of camera vtbl */
 mm_camera_vtbl_t * camera_open(uint8_t camera_idx);
-
+struct camera_info *get_cam_info(int camera_id);
 #endif /*__MM_CAMERA_INTERFACE_H__*/

@@ -1,5 +1,7 @@
 LOCAL_PATH:= $(call my-dir)
 
+ifeq ($(TARGET_CAMERA_HAL_V3),true)
+
 include $(CLEAR_VARS)
 
 LOCAL_SRC_FILES := \
@@ -46,3 +48,5 @@ LOCAL_MODULE_TAGS := optional
 include $(BUILD_SHARED_LIBRARY)
 
 #include $(LOCAL_PATH)/test/Android.mk
+
+endif

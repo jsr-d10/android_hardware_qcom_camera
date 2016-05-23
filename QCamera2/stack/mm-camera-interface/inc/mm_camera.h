@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2013, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2014, The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -33,7 +33,7 @@
 #include <cam_semaphore.h>
 
 #include "mm_camera_interface.h"
-
+#include <hardware/camera.h>
 /**********************************************************************************
 * Data structure declare
 ***********************************************************************************/
@@ -45,7 +45,7 @@
 #define MM_CAMERA_CHANNEL_POLL_THREAD_MAX 1
 
 #define MM_CAMERA_DEV_NAME_LEN 32
-#define MM_CAMERA_DEV_OPEN_TRIES 20
+#define MM_CAMERA_DEV_OPEN_TRIES 2
 #define MM_CAMERA_DEV_OPEN_RETRY_SLEEP 20
 
 #ifndef TRUE
@@ -341,6 +341,10 @@ typedef struct mm_channel {
 
     /* reference to parent cam_obj */
     struct mm_camera_obj* cam_obj;
+
+    /* control for zsl led */
+    uint8_t startZSlSnapshotCalled;
+    uint8_t needLEDFlash;
 } mm_channel_t;
 
 /* struct to store information about pp cookie*/
@@ -388,6 +392,7 @@ typedef struct {
     int8_t num_cam;
     char video_dev_name[MM_CAMERA_MAX_NUM_SENSORS][MM_CAMERA_DEV_NAME_LEN];
     mm_camera_obj_t *cam_obj[MM_CAMERA_MAX_NUM_SENSORS];
+    struct camera_info info[MM_CAMERA_MAX_NUM_SENSORS];
 } mm_camera_ctrl_t;
 
 typedef enum {
@@ -428,9 +433,9 @@ extern int32_t mm_camera_qbuf(mm_camera_obj_t *my_obj,
                               mm_camera_buf_def_t *buf);
 extern int32_t mm_camera_query_capability(mm_camera_obj_t *my_obj);
 extern int32_t mm_camera_set_parms(mm_camera_obj_t *my_obj,
-                                   parm_buffer_t *parms);
+                                   void *parms);
 extern int32_t mm_camera_get_parms(mm_camera_obj_t *my_obj,
-                                   parm_buffer_t *parms);
+                                   void *parms);
 extern int32_t mm_camera_map_buf(mm_camera_obj_t *my_obj,
                                  uint8_t buf_type,
                                  int fd,
@@ -571,7 +576,6 @@ extern int32_t mm_camera_cmd_thread_launch(
                                 mm_camera_cmd_thread_t * cmd_thread,
                                 mm_camera_cmd_cb_t cb,
                                 void* user_data);
-extern int32_t mm_camera_cmd_thread_name(const char* name);
 extern int32_t mm_camera_cmd_thread_release(mm_camera_cmd_thread_t * cmd_thread);
 
 #endif /* __MM_CAMERA_H__ */

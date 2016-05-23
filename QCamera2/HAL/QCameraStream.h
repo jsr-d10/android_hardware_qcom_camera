@@ -1,4 +1,4 @@
-/* Copyright (c) 2012, The Linux Foundataion. All rights reserved.
+/* Copyright (c) 2012,2014 The Linux Foundataion. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -58,7 +58,8 @@ public:
     virtual int32_t init(QCameraHeapMemory *streamInfoBuf,
                          uint8_t minStreamBufNum,
                          stream_cb_routine stream_cb,
-                         void *userdata);
+                         void *userdata,
+                         bool bDynallocBuf);
     virtual int32_t processZoomDone(preview_stream_ops_t *previewWindow,
                                     cam_crop_data_t &crop_info);
     virtual int32_t bufDone(int index);
@@ -69,21 +70,36 @@ public:
 
     static void dataNotifyCB(mm_camera_super_buf_t *recvd_frame, void *userdata);
     static void *dataProcRoutine(void *data);
+    static void *BufAllocRoutine(void *data);
     uint32_t getMyHandle() const {return mHandle;}
     bool isTypeOf(cam_stream_type_t type);
     bool isOrignalTypeOf(cam_stream_type_t type);
     int32_t getFrameOffset(cam_frame_len_offset_t &offset);
     int32_t getCropInfo(cam_rect_t &crop);
+    int32_t setCropInfo(cam_rect_t crop);
     int32_t getFrameDimension(cam_dimension_t &dim);
     int32_t getFormat(cam_format_t &fmt);
     QCameraMemory *getStreamBufs() {return mStreamBufs;};
     uint32_t getMyServerID();
     cam_stream_type_t getMyType();
+    int32_t acquireStreamBufs();
 
     int32_t mapBuf(uint8_t buf_type, uint32_t buf_idx,
                    int32_t plane_idx, int fd, uint32_t size);
     int32_t unmapBuf(uint8_t buf_type, uint32_t buf_idx, int32_t plane_idx);
     int32_t setParameter(cam_stream_parm_buffer_t &param);
+    int32_t getParameter(cam_stream_parm_buffer_t &param);
+
+    static void releaseFrameData(void *data, void *user_data);
+
+    uint8_t getBufferCount() { return mNumBufs; }
+
+    int mDumpFrame;
+    int mDumpMetaFrame;
+    int mDumpSkipCnt;
+
+    void cond_wait();
+    void cond_signal();
 
 private:
     uint32_t mCamHandle;
@@ -93,6 +109,7 @@ private:
     cam_stream_info_t *mStreamInfo; // ptr to stream info buf
     mm_camera_stream_mem_vtbl_t mMemVtbl;
     uint8_t mNumBufs;
+    uint8_t mNumBufsNeedAlloc;
     stream_cb_routine mDataCB;
     void *mUserData;
 
@@ -107,6 +124,12 @@ private:
     cam_padding_info_t mPaddingInfo;
     cam_rect_t mCropInfo;
     pthread_mutex_t mCropLock; // lock to protect crop info
+    pthread_mutex_t mParameterLock; // lock to sync access to parameters
+    bool mStreamBufsAcquired;
+    bool m_bActive; // if stream mProcTh is active
+    bool mDynBufAlloc; // allow buf allocation in 2 steps
+    pthread_t mBufAllocPid;
+    mm_camera_map_unmap_ops_tbl_t m_MemOpsTbl;
 
     static int32_t get_bufs(
                      cam_frame_len_offset_t *offset,
@@ -129,6 +152,10 @@ private:
     int32_t putBufs(mm_camera_map_unmap_ops_tbl_t *ops_tbl);
     int32_t invalidateBuf(int index);
     int32_t cleanInvalidateBuf(int index);
+
+    bool wait_for_cond;
+    pthread_mutex_t m_lock;
+    pthread_cond_t m_cond;
 
 };
 

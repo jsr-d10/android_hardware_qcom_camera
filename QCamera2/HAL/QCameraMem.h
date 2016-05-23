@@ -54,6 +54,7 @@ public:
 
     virtual int allocate(int count, int size) = 0;
     virtual void deallocate() = 0;
+    virtual int allocateMore(int count, int size) = 0;
     virtual int cacheOps(int index, unsigned int cmd) = 0;
     virtual int getRegFlags(uint8_t *regFlags) const = 0;
     virtual camera_memory_t *getMemory(int index, bool metadata) const = 0;
@@ -93,6 +94,7 @@ public:
     virtual ~QCameraHeapMemory();
 
     virtual int allocate(int count, int size);
+    virtual int allocateMore(int count, int size);
     virtual void deallocate();
     virtual int cacheOps(int index, unsigned int cmd);
     virtual int getRegFlags(uint8_t *regFlags) const;
@@ -112,6 +114,7 @@ public:
     virtual ~QCameraStreamMemory();
 
     virtual int allocate(int count, int size);
+    virtual int allocateMore(int count, int size);
     virtual void deallocate();
     virtual int cacheOps(int index, unsigned int cmd);
     virtual int getRegFlags(uint8_t *regFlags) const;
@@ -132,6 +135,7 @@ public:
     virtual ~QCameraVideoMemory();
 
     virtual int allocate(int count, int size);
+    virtual int allocateMore(int count, int size);
     virtual void deallocate();
     virtual camera_memory_t *getMemory(int index, bool metadata) const;
     virtual int getMatchBufIndex(const void *opaque, bool metadata) const;
@@ -153,6 +157,7 @@ public:
     virtual ~QCameraGrallocMemory();
 
     virtual int allocate(int count, int size);
+    virtual int allocateMore(int count, int size);
     virtual void deallocate();
     virtual int cacheOps(int index, unsigned int cmd);
     virtual int getRegFlags(uint8_t *regFlags) const;
@@ -160,7 +165,8 @@ public:
     virtual int getMatchBufIndex(const void *opaque, bool metadata) const;
 	virtual void *getPtr(int index) const;
 
-    void setWindowInfo(preview_stream_ops_t *window, int width, int height, int format);
+    void setWindowInfo(preview_stream_ops_t *window, int width, int height,
+        int stride, int scanline, int format);
     // Enqueue/display buffer[index] onto the native window,
     // and dequeue one buffer from it.
     // Returns the buffer index of the dequeued buffer.
@@ -171,7 +177,7 @@ private:
     int mLocalFlag[MM_CAMERA_MAX_NUM_FRAMES];
     struct private_handle_t *mPrivateHandle[MM_CAMERA_MAX_NUM_FRAMES];
     preview_stream_ops_t *mWindow;
-    int mWidth, mHeight, mFormat;
+    int mWidth, mHeight, mFormat, mStride, mScanline;
     camera_request_memory mGetMemory;
     camera_memory_t *mCameraMemory[MM_CAMERA_MAX_NUM_FRAMES];
     int mMinUndequeuedBuffers;
