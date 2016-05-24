@@ -14,22 +14,13 @@ LOCAL_SHARED_LIBRARIES:= \
     libmedia \
     libui \
     libgui \
-    libcamera_client \
-
-ifneq ($(call is-platform-sdk-version-at-least,18),true)
-
-LOCAL_SHARED_LIBRARIES += \
-    libmedia_native \
-
-LOCAL_CFLAGS += -DUSE_JB_MR1
-
-endif
+    libcamera_client
 
 LOCAL_C_INCLUDES += \
     frameworks/base/include/ui \
     frameworks/base/include/surfaceflinger \
     frameworks/base/include/camera \
-    frameworks/base/include/media \
+    frameworks/base/include/media
 
 LOCAL_MODULE:= camera_test
 LOCAL_MODULE_TAGS:= tests
