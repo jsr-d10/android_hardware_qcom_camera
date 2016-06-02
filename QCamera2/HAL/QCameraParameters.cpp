@@ -2064,6 +2064,34 @@ int32_t QCameraParameters::setAntibanding(const QCameraParameters& params)
 }
 
 /*===========================================================================
+ * FUNCTION   : setAlgoOptimizationsMask
+ *
+ * DESCRIPTION: get the value from persist file in Stats module that will
+ *              control funtionality in the module
+ *
+ * PARAMETERS : none
+ *
+ * RETURN     : int32_t type of status
+ *              NO_ERROR  -- success
+ *              none-zero failure code
+ *==========================================================================*/
+int32_t QCameraParameters::setAlgoOptimizationsMask()
+{
+    uint32_t mask = 0;
+    char value[PROPERTY_VALUE_MAX];
+
+    property_get("persist.camera.stats.opt.mask", value, "0");
+    mask = (uint32_t)atoi(value);
+
+    ALOGV("%s: algo opt ctrl mask :%d", __func__, mask);
+
+    return AddSetParmEntryToBatch(m_pParamBuf,
+                                  CAM_INTF_PARM_ALGO_OPTIMIZATIONS_MASK,
+                                  sizeof(mask),
+                                  &mask);
+}
+
+/*===========================================================================
  * FUNCTION   : setStatsDebugMask
  *
  * DESCRIPTION: get the value from persist file in Stats module that will
@@ -3375,6 +3403,7 @@ int32_t QCameraParameters::updateParameters(QCameraParameters& params,
     // update live snapshot size after all other parameters are set
     if ((rc = setLiveSnapshotSize(params)))             final_rc = rc;
     if ((rc = setStatsDebugMask()))                     final_rc = rc;
+    if ((rc = setAlgoOptimizationsMask()))              final_rc = rc;
     if ((rc = setMobicat(params)))                      final_rc = rc;
 
 UPDATE_PARAM_DONE:
@@ -4708,6 +4737,43 @@ int32_t QCameraParameters::getRedEyeValue()
         sizeof(ENABLE_DISABLE_MODES_MAP)/sizeof(QCameraMap), redEye_str);
 
   return redEye;
+}
+
+/*===========================================================================
+ * FUNCTION   : setLongshotEnable
+ *
+ * DESCRIPTION: set a flag indicating longshot mode
+ *
+ * PARAMETERS :
+ *   @enable  : true - Longshot enabled
+ *              false - Longshot disabled
+ *==========================================================================*/
+int32_t QCameraParameters::setLongshotEnable(bool enable)
+{
+    int32_t rc = NO_ERROR;
+    int8_t value = enable;
+
+    if(initBatchUpdate(m_pParamBuf) < 0 ) {
+        ALOGE("%s:Failed to initialize group update table", __func__);
+        return BAD_TYPE;
+    }
+
+    rc = AddSetParmEntryToBatch(m_pParamBuf,
+          CAM_INTF_PARM_LONGSHOT_ENABLE,
+          sizeof(value),
+          &value);
+    if (rc != NO_ERROR) {
+        ALOGE("%s:Failed to update table", __func__);
+        return rc;
+    }
+
+    rc = commitSetBatch();
+    if (rc != NO_ERROR) {
+        ALOGE("%s:Failed to parameter changes", __func__);
+        return rc;
+    }
+
+    return rc;
 }
 
 /*===========================================================================
@@ -6895,6 +6961,11 @@ int32_t QCameraParameters::updateRAW(cam_dimension_t max_dim)
         max_dim = m_pCapability->raw_dim;
     }
 
+    if(initBatchUpdate(m_pParamBuf) < 0 ) {
+        ALOGE("%s:Failed to initialize group update table", __func__);
+        return BAD_TYPE;
+    }
+
     rc = AddSetParmEntryToBatch(m_pParamBuf,
                                 CAM_INTF_PARM_MAX_DIMENSION,
                                 sizeof(cam_dimension_t),
@@ -6908,6 +6979,11 @@ int32_t QCameraParameters::updateRAW(cam_dimension_t max_dim)
     if (rc != NO_ERROR) {
         ALOGE("%s:Failed to set lock CAM_INTF_PARM_MAX_DIMENSION parm", __func__);
         return rc;
+    }
+
+    if(initBatchUpdate(m_pParamBuf) < 0 ) {
+        ALOGE("%s:Failed to initialize group update table", __func__);
+        return BAD_TYPE;
     }
 
     rc = AddGetParmEntryToBatch(m_pParamBuf,
@@ -7378,7 +7454,7 @@ int32_t QCameraParameters::commitSetBatch()
         rc = m_pCamOpsTbl->ops->set_parms(m_pCamOpsTbl->camera_handle,
                                                       (void *)m_pParamBuf);
         ALOGD("%s:waiting for commitSetBatch to complete",__func__);
-        //sem_wait(&m_pParamBuf->cam_sync_sem);
+        sem_wait(&m_pParamBuf->cam_sync_sem);
     }
     if (rc == NO_ERROR) {
         // commit change from temp storage into param map
@@ -7405,7 +7481,7 @@ int32_t QCameraParameters::commitGetBatch()
         rc = m_pCamOpsTbl->ops->get_parms(m_pCamOpsTbl->camera_handle,
                                                           (void *)m_pParamBuf);
         ALOGD("%s:waiting for commitGetBatch to complete",__func__);
-        //sem_wait(&m_pParamBuf->cam_sync_sem);
+        sem_wait(&m_pParamBuf->cam_sync_sem);
     }
     return rc;
 }

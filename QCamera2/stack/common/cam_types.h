@@ -37,6 +37,11 @@
 
 #define CAM_MAX_NUM_BUFS_PER_STREAM 24
 #define MAX_METADATA_PAYLOAD_SIZE 1024
+#define AWB_DEBUG_DATA_SIZE          (7027)
+#define AEC_DEBUG_DATA_SIZE          (1720)
+#define AF_DEBUG_DATA_SIZE           (643)
+#define ASD_DEBUG_DATA_SIZE          (100)
+#define STATS_BUFFER_DEBUG_DATA_SIZE (74756)
 
 #define CEILING64(X) (((X) + 0x0003F) & 0xFFFFFFC0)
 #define CEILING32(X) (((X) + 0x0001F) & 0xFFFFFFE0)
@@ -52,11 +57,11 @@
 #define MAX_NUM_STREAMS          8
 #define CHROMATIX_SIZE 21292
 #define COMMONCHROMATIX_SIZE 42044
-#define AFTUNE_SIZE 2000
+#define AFTUNE_SIZE 4000  //sizeof(actuator_driver_params_t) + sizeof(af_algo_tune_parms_t)
 #define MAX_SCALE_SIZES_CNT 8
 #define MAX_SAMP_DECISION_CNT     64
 
-#define MAX_ISP_DATA_SIZE 9000
+#define MAX_ISP_DATA_SIZE 11500
 #define MAX_PP_DATA_SIZE 2000
 #define MAX_AE_STATS_DATA_SIZE  1000
 #define MAX_AWB_STATS_DATA_SIZE 1000
@@ -78,11 +83,9 @@
 #define TUNING_CPP_DATA_OFFSET     (TUNING_SENSOR_DATA_MAX + TUNING_VFE_DATA_MAX)
 #define TUNING_CAC_DATA_OFFSET     (TUNING_SENSOR_DATA_MAX + \
                                    TUNING_VFE_DATA_MAX + TUNING_CPP_DATA_MAX)
-#define MAX_ISP_DATA_SIZE 9000
-#define MAX_PP_DATA_SIZE 2000
 #define MAX_STATS_DATA_SIZE 4000
 
-
+#define MAX_AF_BRACKETING_VALUES 5
 
 typedef enum {
     CAM_HAL_V1 = 1,
@@ -636,8 +639,8 @@ typedef struct {
     cam_denoise_process_type_t process_plates;
 } cam_denoise_param_t;
 
-#define CAM_FACE_PROCESS_MASK_DETECTION    (1<<0)
-#define CAM_FACE_PROCESS_MASK_RECOGNITION  (1<<1)
+#define CAM_FACE_PROCESS_MASK_DETECTION    (1U<<0)
+#define CAM_FACE_PROCESS_MASK_RECOGNITION  (1U<<1)
 typedef struct {
     int fd_mode;               /* mask of face process */
     int num_fd;
@@ -949,6 +952,7 @@ typedef enum {
     CAM_INTF_PARM_SET_VFE_COMMAND,
     CAM_INTF_PARM_SET_PP_COMMAND,
     CAM_INTF_PARM_TINTLESS,
+    CAM_INTF_PARM_LONGSHOT_ENABLE,
 
     /* stream based parameters */
     CAM_INTF_PARM_DO_REPROCESS,
@@ -1094,6 +1098,7 @@ typedef enum {
     CAM_INTF_META_ASD_HDR_SCENE_DATA,
     CAM_INTF_META_PRIVATE_DATA,
     CAM_INTF_PARM_STATS_DEBUG_MASK,
+    CAM_INTF_PARM_ALGO_OPTIMIZATIONS_MASK,
 
     CAM_INTF_PARM_MAX
 } cam_intf_parm_type_t;

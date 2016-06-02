@@ -532,6 +532,7 @@ public:
     const char *getASDStateString(cam_auto_scene_t scene);
     bool isHDRThumbnailProcessNeeded() { return m_bHDRThumbnailProcessNeeded; };
 	int getAutoFlickerMode();
+    int32_t setLongshotEnable(bool enable);
 
 private:
     int32_t setPreviewSize(const QCameraParameters& );
@@ -591,6 +592,7 @@ private:
     int32_t setBurstNum(const QCameraParameters& params);
     int32_t setSnapshotFDReq(const QCameraParameters& );
     int32_t setStatsDebugMask();
+    int32_t setAlgoOptimizationsMask();
     int32_t setTintlessValue(const QCameraParameters& params);
     int32_t setMobicat(const QCameraParameters& params);
     bool UpdateHFRFrameRate(const QCameraParameters& params);

@@ -1105,7 +1105,7 @@ int QCamera2HardwareInterface::openCamera()
     gCamCapability[mCameraId]->video_sizes_tbl_cnt = savedSizes[mCameraId].all_video_sizes_cnt;
 
     //check if video size 4k x 2k support is enabled
-    property_get("sys.camera.4k2k.enable", value, "0");
+    property_get("persist.camera.4k2k.enable", value, "0");
     enable_4k2k = atoi(value) > 0 ? 1 : 0;
     ALOGD("%s: enable_4k2k is %d", __func__, enable_4k2k);
     if (!enable_4k2k) {
@@ -1330,7 +1330,6 @@ int QCamera2HardwareInterface::getCapabilities(int cameraId,
     pthread_mutex_lock(&g_camlock);
     p_info = get_cam_info(cameraId);
     memcpy(info, p_info, sizeof (struct camera_info));
-    property_set("camera.4k2k.enable", "0");
     pthread_mutex_unlock(&g_camlock);
     return rc;
 }
@@ -2151,7 +2150,11 @@ int QCamera2HardwareInterface::takePicture()
                 ALOGE("%s: cannot start postprocessor", __func__);
                 return rc;
             }
-
+            if ( mLongshotEnabled ) {
+                mCameraHandle->ops->start_zsl_snapshot(
+                        mCameraHandle->camera_handle,
+                        pZSLChannel->getMyHandle());
+            }
             rc = pZSLChannel->takePicture(numSnapshots);
             if (rc != NO_ERROR) {
                 ALOGE("%s: cannot take ZSL picture", __func__);
@@ -2418,7 +2421,7 @@ char* QCamera2HardwareInterface::getParameters()
     String8 str;
 
     int cur_width, cur_height;
-
+    pthread_mutex_lock(&m_parm_lock);
     //Need take care Scale picture size
     if(mParameters.m_reprocScaleParam.isScaleEnabled() &&
         mParameters.m_reprocScaleParam.isUnderScaling()){
@@ -2451,6 +2454,7 @@ char* QCamera2HardwareInterface::getParameters()
         pic_size.append(buffer);
         mParameters.set(CameraParameters::KEY_PICTURE_SIZE, pic_size);
     }
+    pthread_mutex_unlock(&m_parm_lock);
     return strParams;
 }
 
@@ -2530,7 +2534,7 @@ int QCamera2HardwareInterface::sendCommand(int32_t command,
                 }
             }
             //
-
+            mParameters.setLongshotEnable(mLongshotEnabled);
         } else {
             rc = NO_INIT;
         }
@@ -2539,10 +2543,17 @@ int QCamera2HardwareInterface::sendCommand(int32_t command,
         if ( mLongshotEnabled && m_stateMachine.isCaptureRunning() ) {
             cancelPicture();
             processEvt(QCAMERA_SM_EVT_SNAPSHOT_DONE, NULL);
+            QCameraChannel *pZSLChannel = m_channels[QCAMERA_CH_TYPE_ZSL];
+            if (isZSLMode() && (NULL != pZSLChannel)) {
+                mCameraHandle->ops->stop_zsl_snapshot(
+                        mCameraHandle->camera_handle,
+                        pZSLChannel->getMyHandle());
+            }
         }
         ALOGD("%s: Longshot Disabled", __func__);
         mLongshotEnabled = false;
         rc = setLongShot(mLongshotEnabled);
+        mParameters.setLongshotEnable(mLongshotEnabled);
         break;
     case CAMERA_CMD_HISTOGRAM_ON:
     case CAMERA_CMD_HISTOGRAM_OFF:
@@ -2998,7 +3009,9 @@ int32_t QCamera2HardwareInterface::processHDRData(cam_asd_hdr_scene_data_t hdr_s
     } else {
         m_HDRSceneEnabled = false;
     }
+    pthread_mutex_lock(&m_parm_lock);
     mParameters.setHDRSceneEnable(m_HDRSceneEnabled);
+    pthread_mutex_unlock(&m_parm_lock);
 
     if ( msgTypeEnabled(CAMERA_MSG_META_DATA) ) {
 
@@ -3269,6 +3282,9 @@ int32_t QCamera2HardwareInterface::prepareRawStream(QCameraChannel *curChannel)
     for (int i = 0; i < curChannel->getNumOfStreams();i++) {
         QCameraStream *pStream = curChannel->getStreamByIndex(i);
         if (pStream != NULL) {
+            if (pStream->isTypeOf(CAM_STREAM_TYPE_METADATA)) {
+                continue;
+            }
             pStream->getFrameDimension(str_dim);
             if (str_dim.width > max_dim.width) {
                 max_dim.width = str_dim.width;
