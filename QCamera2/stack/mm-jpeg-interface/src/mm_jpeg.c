@@ -1751,7 +1751,8 @@ int32_t mm_jpeg_init(mm_jpeg_obj *my_obj)
   /* set work buf size from max picture size */
   if (my_obj->max_pic_w <= 0 || my_obj->max_pic_h <= 0) {
     CDBG_ERROR("%s:%d] Width and height are not valid "
-      "dimensions, cannot calc work buf size",__func__, __LINE__);
+      "dimensions, cannot calc work buf size (%d x %d)",__func__, __LINE__,
+      my_obj->max_pic_w, my_obj->max_pic_h);
     return -1;
   }
   work_buf_size = CEILING64(my_obj->max_pic_w) *
