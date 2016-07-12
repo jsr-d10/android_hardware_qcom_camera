@@ -379,7 +379,7 @@ void QCamera2HardwareInterface::preview_stream_cb_routine(mm_camera_super_buf_t 
                                                           QCameraStream * stream,
                                                           void *userdata)
 {
-    ALOGD("[KPI Perf] %s : BEGIN", __func__);
+    CDBG("[KPI Perf] %s : BEGIN", __func__);
     int err = NO_ERROR;
     QCamera2HardwareInterface *pme = (QCamera2HardwareInterface *)userdata;
     QCameraGrallocMemory *memory = (QCameraGrallocMemory *)super_frame->bufs[0]->mem_info;
@@ -491,7 +491,7 @@ void QCamera2HardwareInterface::preview_stream_cb_routine(mm_camera_super_buf_t 
     }
 
     free(super_frame);
-    ALOGD("[KPI Perf] %s : END", __func__);
+    CDBG("[KPI Perf] %s : END", __func__);
     return;
 }
 
@@ -946,7 +946,7 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
                                                            QCameraStream * stream,
                                                            void * userdata)
 {
-    ALOGV("[KPI Perf] %s : BEGIN", __func__);
+    CDBG("[KPI Perf] %s : BEGIN", __func__);
     QCamera2HardwareInterface *pme = (QCamera2HardwareInterface *)userdata;
     if (pme == NULL ||
         pme->mCameraHandle == NULL ||
@@ -1083,7 +1083,7 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
         }
     }
 
-    ALOGD("%s: hdr_scene_data: %d %d %f\n",
+    CDBG("%s: hdr_scene_data: %d %d %f\n",
           __func__,
           pMetaData->is_hdr_scene_data_valid,
           pMetaData->hdr_scene_data.is_hdr_scene,
@@ -1128,7 +1128,7 @@ void QCamera2HardwareInterface::metadata_stream_cb_routine(mm_camera_super_buf_t
     stream->bufDone(frame->buf_idx);
     free(super_frame);
 
-    ALOGV("[KPI Perf] %s : END", __func__);
+    CDBG("[KPI Perf] %s : END", __func__);
 }
 
 /*===========================================================================

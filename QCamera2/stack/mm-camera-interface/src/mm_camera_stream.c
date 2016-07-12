@@ -1009,7 +1009,7 @@ int32_t mm_stream_read_msm_frame(mm_stream_t * my_obj,
           (vb.reserved == V4L2_PIX_FMT_NV14 || vb.reserved == V4L2_PIX_FMT_NV41);
 #endif
 
-        CDBG_HIGH("%s: VIDIOC_DQBUF buf_index %d, frame_idx %d, stream type %d\n",
+        CDBG("%s: VIDIOC_DQBUF buf_index %d, frame_idx %d, stream type %d\n",
                    __func__, vb.index, buf_info->buf->frame_idx, my_obj->stream_info->stream_type);
         if ( NULL != my_obj->mem_vtbl.clean_invalidate_buf ) {
             rc = my_obj->mem_vtbl.clean_invalidate_buf(idx,
@@ -1210,7 +1210,7 @@ int32_t mm_stream_qbuf(mm_stream_t *my_obj, mm_camera_buf_def_t *buf)
             return rc;
         }
     }
-    CDBG_HIGH("%s: VIDIOC_QBUF:fd = %d, state = %d, stream type=%d, qbuf_index %d, frame_idx %d",
+    CDBG("%s: VIDIOC_QBUF:fd = %d, state = %d, stream type=%d, qbuf_index %d, frame_idx %d",
                __func__, my_obj->fd, my_obj->state, my_obj->stream_info->stream_type,
                buffer.index,buf->frame_idx);
 

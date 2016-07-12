@@ -53,6 +53,7 @@ cam_capability_t *gCamCapability[MM_CAMERA_MAX_NUM_SENSORS];
 qcamera_saved_sizes_list savedSizes[MM_CAMERA_MAX_NUM_SENSORS];
 
 static pthread_mutex_t g_camlock = PTHREAD_MUTEX_INITIALIZER;
+volatile uint32_t gCamHalLogLevel = 0;
 
 camera_device_ops_t QCamera2HardwareInterface::mCameraOps = {
     set_preview_window:         QCamera2HardwareInterface::set_preview_window,
@@ -846,6 +847,11 @@ void QCamera2HardwareInterface::release(struct camera_device *device)
 int QCamera2HardwareInterface::dump(struct camera_device *device, int fd)
 {
     int ret = NO_ERROR;
+
+    //Log level property is read when "adb shell dumpsys media.camera" is
+    //called so that the log level can be controlled without restarting
+    //media server
+    getLogLevel();
     QCamera2HardwareInterface *hw =
         reinterpret_cast<QCamera2HardwareInterface *>(device->priv);
     if (!hw) {
@@ -968,6 +974,7 @@ QCamera2HardwareInterface::QCamera2HardwareInterface(int cameraId)
       mFlashNeeded(false),
       mCaptureRotation(0)
 {
+    getLogLevel();
     mCameraDevice.common.tag = HARDWARE_DEVICE_TAG;
     mCameraDevice.common.version = HARDWARE_DEVICE_API_VERSION(1, 0);
     mCameraDevice.common.close = close_camera_device;
@@ -1831,7 +1838,7 @@ int QCamera2HardwareInterface::setCallBacks(camera_notify_callback notify_cb,
 int QCamera2HardwareInterface::enableMsgType(int32_t msg_type)
 {
     mMsgEnabled |= msg_type;
-    ALOGD("%s (0x%x) : mMsgEnabled = 0x%x", __func__, msg_type , mMsgEnabled );
+    CDBG("%s (0x%x) : mMsgEnabled = 0x%x", __func__, msg_type , mMsgEnabled );
     return NO_ERROR;
 }
 
@@ -1850,7 +1857,7 @@ int QCamera2HardwareInterface::enableMsgType(int32_t msg_type)
 int QCamera2HardwareInterface::disableMsgType(int32_t msg_type)
 {
     mMsgEnabled &= ~msg_type;
-    ALOGD("%s (0x%x) : mMsgEnabled = 0x%x", __func__, msg_type , mMsgEnabled );
+    CDBG("%s (0x%x) : mMsgEnabled = 0x%x", __func__, msg_type , mMsgEnabled );
     return NO_ERROR;
 }
 
@@ -3054,7 +3061,7 @@ int32_t QCamera2HardwareInterface::processHDRData(cam_asd_hdr_scene_data_t hdr_s
         }
     }
 
-    ALOGE("%s : hdr_scene_data: processHDRData: %d %f",
+    CDBG("%s : hdr_scene_data: processHDRData: %d %f",
           __func__,
           hdr_scene.is_hdr_scene,
           hdr_scene.hdr_confidence);
@@ -5318,6 +5325,28 @@ bool QCamera2HardwareInterface::isCaptureShutterEnabled()
     property_get("persist.camera.feature.shutter", prop, "0");
     int enableShutter = atoi(prop);
     return enableShutter == 1;
+}
+
+/*===========================================================================
+ * FUNCTION   : getLogLevel
+ *
+ * DESCRIPTION: Reads the log level property into a variable
+ *
+ * PARAMETERS :
+ *   None
+ *
+ * RETURN     :
+ *   None
+ *==========================================================================*/
+void QCamera2HardwareInterface::getLogLevel()
+{
+    char prop[PROPERTY_VALUE_MAX];
+
+    property_get("persist.camera.logs", prop, "1");
+    gCamHalLogLevel = atoi(prop);
+
+    ALOGI("%s: gCamHalLogLevel=%d", __func__, gCamHalLogLevel);
+    return;
 }
 
 }; // namespace qcamera
