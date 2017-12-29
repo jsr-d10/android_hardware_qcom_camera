@@ -1792,7 +1792,8 @@ int32_t mm_jpeg_init(mm_jpeg_obj *my_obj)
 #ifdef LOAD_ADSP_RPC_LIB
   my_obj->adsprpc_lib_handle = dlopen("libadsprpc.so", RTLD_NOW);
   if (NULL == my_obj->adsprpc_lib_handle) {
-    CDBG_ERROR("%s:%d] Cannot load the library", __func__, __LINE__);
+    const char *error = dlerror();
+    CDBG_ERROR("%s:%d] Cannot load the libadsprpc.so library: ", __func__, __LINE__, error);
     /* not returning error here bcoz even if this loading fails
         we can go ahead with SW JPEG enc */
   }
